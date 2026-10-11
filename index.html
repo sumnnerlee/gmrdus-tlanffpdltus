@@ -1,82 +1,530 @@
-너는 시니어 프론트엔드 개발자야. 아래 명세대로 "단일 HTML 파일" 하나를 만들어줘.
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>흑연 공급망 시나리오 비교 도구</title>
+<style>
+  :root{
+    --A:#2563eb; --B:#16a34a; --C:#7c3aed; --warn:#dc2626; --bad:#ea580c; --good:#16a34a;
+    --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --bg:#ffffff; --soft:#f9fafb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;font-size:17px;line-height:1.5}
+  header{padding:22px 28px 10px}
+  h1{margin:0;font-size:28px}
+  .sub{margin:4px 0 0;color:var(--muted)}
+  .tabs{display:flex;gap:8px;padding:10px 28px;border-bottom:2px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+  .tab{font:inherit;font-size:18px;font-weight:700;padding:10px 22px;border:2px solid var(--line);background:var(--soft);border-radius:10px;cursor:pointer}
+  .tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  main{padding:18px 28px 40px;max-width:1280px;margin:0 auto}
+  h2{font-size:24px;margin:18px 0 10px}
+  h2 span{display:block;font-size:15px;font-weight:400;color:var(--muted);margin-top:2px}
+  h3{margin:0 0 10px;font-size:19px}
+  h4{margin:0 0 6px;font-size:16px}
+  .panel{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0;background:var(--bg)}
+  details.panel>summary{cursor:pointer;font-weight:700;font-size:18px}
+  .hidden{display:none !important}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:860px){.two-col{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line);border-top:6px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--bg)}
+  .card.A{border-top-color:var(--A)} .card.B{border-top-color:var(--B)} .card.C{border-top-color:var(--C)}
+  .card h3.A{color:var(--A)} .card h3.B{color:var(--B)} .card h3.C{color:var(--C)}
+  .ctl{display:grid;grid-template-columns:minmax(110px,1.2fr) 2fr 90px auto;gap:8px;align-items:center;margin:6px 0}
+  .ctl label{font-weight:600;font-size:15px}
+  .ctl input[type=range]{width:100%}
+  .ctl input[type=number]{width:90px;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px}
+  .unit{color:var(--muted);font-size:14px;min-width:52px}
+  .hint{color:var(--muted);font-size:14px;margin:4px 0 8px}
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+  .metric{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--soft)}
+  .metric.warn{background:#fef2f2;border-color:var(--warn)}
+  .mname{font-size:14px;color:var(--muted)}
+  .mval{font-size:24px;font-weight:800}
+  .metric.warn .mval{color:var(--warn)}
+  .delta{font-size:14px;font-weight:700}
+  .delta small{font-weight:400;color:var(--muted)}
+  .delta.good{color:var(--good)} .delta.bad{color:var(--bad)} .delta.flat{color:var(--muted)}
+  .warnbox{margin-top:12px;padding:12px 14px;border:2px solid var(--warn);background:#fef2f2;color:var(--warn);font-weight:800;font-size:18px;border-radius:10px}
+  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:10px}
+  .chart{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .brow{display:grid;grid-template-columns:96px 1fr 90px;gap:8px;align-items:center;margin:5px 0;font-size:14px}
+  .btrack{background:#f3f4f6;border-radius:6px;height:18px;overflow:hidden}
+  .bfill{height:100%;border-radius:6px;transition:width .2s}
+  .bval{text-align:right;font-weight:700}
+  .tablewrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:15px}
+  th,td{border:1px solid var(--line);padding:6px 8px;text-align:left}
+  th{background:var(--soft)}
+  td input[type=number]{width:100px;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px}
+  td input[type=text]{width:100%;min-width:140px;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px}
+  td.bad{background:#fef2f2;color:var(--warn);font-weight:800}
+  .subtabs{display:flex;gap:8px;margin:12px 0 0;flex-wrap:wrap}
+  .stab{font:inherit;font-weight:700;padding:8px 16px;border:2px solid var(--line);background:var(--soft);border-radius:10px 10px 0 0;cursor:pointer}
+  .stab.active.A{background:var(--A);border-color:var(--A);color:#fff}
+  .stab.active.B{background:var(--B);border-color:var(--B);color:#fff}
+  .stab.active.C{background:var(--C);border-color:var(--C);color:#fff}
+  button.reset{font:inherit;font-weight:700;margin-top:10px;padding:8px 16px;border-radius:8px;border:2px solid var(--ink);background:#fff;cursor:pointer}
+  details.formula{margin:12px 0}
+  details.formula summary{cursor:pointer;font-weight:700}
+  details.formula pre{white-space:pre-wrap;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:14px;font-family:inherit}
+  footer{padding:14px 28px 30px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <h1>흑연 공급망 시나리오 비교 도구</h1>
+  <p class="sub">2023년 중국 흑연 수출통제 사례 · 한국의 조달 시나리오 비교 (가정값 기반)</p>
+</header>
 
-# 1. 프로그램 목적
-대학 국제통상학과 학술제 발표용 "가정 기반 시나리오 비교 도구".
-주제: 2023년 중국의 흑연 수출통제 사례를 가정으로, 한국의 흑연 조달 시나리오를 비교한다.
-예측 프로그램이 아니라 시나리오 비교 도구임을 화면 하단에 작은 문구로 명시한다. ("본 도구는 가정값에 기반한 시나리오 비교용이며 실제 예측이 아닙니다.")
-사용자는 통상 지식이 깊지 않은 청중이므로, 용어는 쉽게, 화면은 단순하게 만든다.
+<nav class="tabs" id="winTabs">
+  <button class="tab active" data-win="div">공급망 다변화</button>
+  <button class="tab" data-win="block">경로 차단</button>
+</nav>
 
-# 2. 기술 조건 (필수)
-- 단일 HTML 파일(HTML+CSS+JS 한 파일). 외부 CDN/라이브러리/폰트 사용 금지(오프라인에서 동작해야 함).
-- 그래프는 순수 CSS 또는 SVG로 직접 그린다.
-- localStorage 등 브라우저 저장소는 사용하지 않는다.
-- 모든 가정값은 코드 맨 위의 CONFIG 객체 한 곳에 모아서, 나중에 숫자만 수정하면 되게 한다.
-- UI 언어는 한국어. 모바일 가독성은 신경 쓰되 기본은 노트북/프로젝터 화면 기준.
+<main>
+  <details class="panel" open>
+    <summary>공통 인풋 (두 창이 함께 사용)</summary>
+    <div id="globalInputs" style="margin-top:8px"></div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>공급처</th><th>연간 최대 공급 가능량(톤)</th><th>톤당 가격(USD)</th>
+            <th>해상 운송시간(일)</th><th>해상 톤당 운송비(USD)</th><th>근거/출처</th>
+          </tr>
+        </thead>
+        <tbody id="supBody"></tbody>
+      </table>
+    </div>
+    <button class="reset" id="resetBtn">초기값으로 되돌리기</button>
+  </details>
 
-# 3. 전체 구조
-상단 탭으로 2개 창:
-- 「공급망 다변화」 창: 시나리오 A와 B를 "한 화면에 좌우로 나란히" 보여준다(페이지 이동 없음).
-- 「경로 차단」 창: 시나리오 A, B, C를 탭으로 전환하되, 화면 하단에 3개 시나리오를 한눈에 비교하는 표 + 막대그래프를 항상 보여준다.
-각 창은 "인풋 영역 + 아웃풋 영역"이 같은 화면에 있어야 한다.
-인풋을 바꾸면(슬라이더/숫자 입력) 버튼 없이 아웃풋이 즉시 갱신된다.
+  <!-- Window 1 -->
+  <section id="win-div">
+    <h2>공급망 다변화<span>질문: 공급처를 다변화하면 수출통제 충격이 얼마나 줄어드나?</span></h2>
+    <div class="panel" id="divCommon"></div>
+    <div class="two-col">
+      <div class="card A">
+        <h3 class="A">시나리오 A · 중국만 수입 (기준)</h3>
+        <p class="hint">중국 비중 100% 고정. 수출 감소율만큼 중국 공급 가능량이 줄어듭니다.</p>
+        <div id="divA-out"></div>
+      </div>
+      <div class="card B">
+        <h3 class="B">시나리오 B · 일부 대체 (공급처 다변화)</h3>
+        <div id="divB-in"></div>
+        <p class="hint">비중 합계는 항상 100%로 자동 보정됩니다. 중국 비중은 최소 10%입니다.</p>
+        <div id="divB-out"></div>
+      </div>
+    </div>
+    <div class="panel"><h3>비교 그래프</h3><div class="charts" id="divCharts"></div></div>
+    <details class="formula">
+      <summary>계산식 보기</summary>
+      <pre>
+중국 실제 공급 가능량 = 중국 최대 공급량 × (1 − 수출 감소율)
+다른 공급처 실제 공급 가능량 = 최대 공급량
+목표 물량 = 수요 × 비중
+실제 물량 = min(목표 물량, 실제 공급 가능량)
+총 조달비용 = Σ (톤당 가격 + 톤당 운송비) × 실제 물량
+평균 소요시간 = Σ (운송시간 × 실제 물량) ÷ 총 실제 물량
+중국 의존도 = 중국 실제 물량 ÷ 총 실제 물량 × 100
+공급 부족량 = max(0, 수요 − 총 실제 물량)
+증감률 = (B − A) ÷ A × 100</pre>
+    </details>
+  </section>
 
-# 4. 인풋 설계
-## 4-1. 공통 인풋 (맨 위에서 한 번만 입력, 두 창이 공유)
-- 연간 수입 수요량(톤): 기본 100 (※ 비율 비교용 가상 단위)
-## 4-2. 공급처 정보 (표 형태, 행: 중국 / 대체국 X / 대체국 Y, 이름은 사용자가 수정 가능)
-각 공급처별 입력 열:
-- 연간 최대 공급 가능량(톤)
-- 톤당 가격(USD)
-- 해상 운송시간(일)
-- 해상 톤당 운송비(USD)
-- 근거/출처 (자유 텍스트 입력칸, 기본값 "가정값 - 조사 후 수정")
-## 4-3. 항공 정보 (중국발 항공 수입용)
-- 항공 운송시간(일), 항공 톤당 운송비(USD), 항공 월 최대 수송 가능량(톤)
-## 4-4. 기본 가정값 예시 (CONFIG에 넣을 것, 임의 값임을 코드 주석에 표시)
-- 수요 100톤/년
-- 중국: 최대 공급 150, 가격 1000, 해상 7일, 운송비 50
-- 대체국 X: 최대 40, 가격 1150, 해상 25일, 운송비 120
-- 대체국 Y: 최대 35, 가격 1200, 해상 30일, 운송비 140
-- 항공: 3일, 톤당 운송비 3000, 월 최대 5톤
-- 재고: 비축량 20톤, 단가 1000
-- 경로 차단 기간 3개월
+  <!-- Window 2 -->
+  <section id="win-block" class="hidden">
+    <h2>경로 차단<span>질문: 중국발 경로가 갑자기 막혔을 때 어떤 대응이 나은가?</span></h2>
+    <div class="panel" id="blockCommon"></div>
+    <div class="subtabs" id="blockTabs">
+      <button class="stab A active" data-bt="A">A · 항공 수입</button>
+      <button class="stab B" data-bt="B">B · 다른 수출국 전량 대체 (기준)</button>
+      <button class="stab C" data-bt="C">C · 재고 비축 활용</button>
+    </div>
+    <div class="card A" id="blockCard">
+      <div id="blkA-in">
+        <p class="hint">중국에서 항공으로 수입합니다. 항공 월 최대 수송량이 부족하면 공급 부족이 발생합니다.</p>
+      </div>
+      <div id="blkB-in" class="hidden">
+        <p class="hint">중국 0% 고정. 두 대체국이 차단 기간 수요 전량을 충당해야 합니다.</p>
+      </div>
+      <div id="blkC-in" class="hidden">
+        <p class="hint">비축된 재고로 차단 기간 동안 버팁니다. 소요시간은 0일로 계산합니다.</p>
+      </div>
+      <div id="blockOut"></div>
+    </div>
+    <div class="panel">
+      <h3>3개 시나리오 비교 (차단 기간 기준)</h3>
+      <div class="tablewrap"><table id="cmpTable"></table></div>
+      <div class="charts" id="blockCharts"></div>
+    </div>
+    <details class="formula">
+      <summary>계산식 보기</summary>
+      <pre>
+기준 수요 = 연간 수요 ÷ 12 × 차단 기간(개월)
+공급처 공급 가능량 = 연간 최대 공급량 ÷ 12 × 차단 기간(개월)
 
-# 5. 시나리오별 로직
+[A 항공] 실제 물량 = min(기준 수요, 항공 월 최대 수송량 × 차단 기간)
+         비용 = (중국 톤당 가격 + 항공 톤당 운송비) × 실제 물량, 시간 = 항공 운송시간
+[B 전량 대체] 중국 0%, 목표 물량 = 기준 수요 × 비중
+         실제 물량 = min(목표 물량, 공급 가능량)
+         비용 = Σ (톤당 가격 + 해상 운송비) × 실제 물량
+[C 재고] 재고로 버틸 기간(개월) = 재고량 ÷ (연간 수요 ÷ 12)
+         충당 물량 = min(기준 수요, 재고량), 비용 = 재고 단가 × 충당 물량, 시간 = 0일
 
-## (1) 공급망 다변화 창  ※ 질문: "공급처를 다변화하면 수출통제 충격이 얼마나 줄어드나?"
-추가 인풋: 중국 수출 감소율(슬라이더 0~100%, 기본 30%) — 중국의 실제 공급 가능량 = 최대공급량 × (1 − 감소율)
-- 시나리오 A (중국만 수입): 중국 비중 100%.
-- 시나리오 B (일부 대체): 중국/X/Y 비중 슬라이더(합계 100%가 되도록 자동 보정, 기본 60/20/20). 중국이 0%가 되지 않도록 중국 비중 최소값을 10%로 제한(전량 대체는 경로 차단 B와 구분하기 위함).
-계산 (각 공급처별):
-- 목표 물량 = 수요 × 비중
-- 실제 물량 = min(목표 물량, 해당 공급처의 실제 공급 가능량)
-- 공급 부족량 = 수요 − 실제 물량 합계(0 이상)
+공급 부족량 = max(0, 기준 수요 − 실제 물량)
+중국 의존도 = 중국산 신규 수입량 ÷ 전체 신규 수입량 × 100 (C는 해당 없음)
+증감률 = (해당 시나리오 − B) ÷ B × 100</pre>
+    </details>
+  </section>
+</main>
 
-## (2) 경로 차단 창  ※ 질문: "중국발 경로가 갑자기 막혔을 때 어떤 대응이 나은가?"
-추가 인풋: 차단 기간(개월, 슬라이더 1~12, 기본 3). 비교 기준 수요 = 수요 ÷ 12 × 차단 기간. 공급처 최대 공급량도 동일하게 ÷12 × 차단 기간으로 환산.
-- 시나리오 A (항공 수입): 중국에서 항공으로 수입. 실제 물량 = min(기준 수요, 항공 월 최대 수송량 × 차단 기간). 비용에는 항공 운송비를 적용.
-- 시나리오 B (다른 수출국 전량 대체): 중국 0%. X/Y 비중 슬라이더(합계 100%, 기본 50/50). 실제 물량 = min(목표, 공급 가능량). 부족분 계산.
-- 시나리오 C (재고 비축 활용): 인풋은 재고 비축량(톤), 재고 단가. 재고로 버틸 수 있는 기간(개월) = 비축량 ÷ (수요 ÷ 12). 차단 기간 동안 충당 물량 = min(기준 수요, 재고). 소요시간은 0일로 처리. 공급 부족량 = 기준 수요 − 충당 물량.
+<footer>본 도구는 가정값에 기반한 시나리오 비교용이며 실제 예측이 아닙니다.</footer>
 
-# 6. 아웃풋 (모든 시나리오 공통 4개 + 보조 1개)
-1. 총 조달비용 = Σ (톤당 가격 + 운송비) × 실제 물량
-2. 평균 소요시간(일) = 물량 가중 평균 운송시간
-3. 중국 의존도(%) = 중국산 신규 수입량 ÷ 전체 신규 수입량 (시나리오 C는 "해당 없음" 표시)
-4. 공급 부족량(톤)
-5. (시나리오 C 전용) 재고로 버틸 수 있는 기간(개월)
+<script>
+/* ===== CONFIG: placeholder assumptions. Edit the numbers here after research. ===== */
+const CONFIG = {
+  demand: 100,                       // annual demand (tons, virtual unit for ratio comparison)
+  shock: 30,                         // China export reduction rate (%)
+  blockMonths: 3,                    // route blockage duration (months)
+  suppliers: [
+    { id:'cn', name:'중국',    cap:150, price:1000, seaDays:7,  seaCost:50,  note:'가정값 - 조사 후 수정' },
+    { id:'x',  name:'대체국 X', cap:40,  price:1150, seaDays:25, seaCost:120, note:'가정값 - 조사 후 수정' },
+    { id:'y',  name:'대체국 Y', cap:35,  price:1200, seaDays:30, seaCost:140, note:'가정값 - 조사 후 수정' }
+  ],
+  air:   { days:3, cost:3000, monthlyCap:5 },
+  stock: { amount:20, price:1000 },
+  divWeights:   { cn:60, x:20, y:20 },
+  blockWeights: { x:50, y:50 }
+};
+/* ===== end CONFIG ===== */
 
-# 7. 화면/UX 요구사항
-- 아웃풋은 숫자 카드 + 막대그래프(SVG/CSS)로 표시.
-- 기준 시나리오(다변화 창은 A, 경로 차단 창은 B) 대비 증감률을 "+12%" / "-8%" 형태로 숫자 옆에 표시. 좋아지면 초록, 나빠지면 주황으로 표시.
-- 공급 부족량이 0보다 크면 해당 카드와 막대를 빨간색으로 강조하고 "⚠ 공급 부족 ○톤: 이 가정에서는 다변화만으로 수요를 채울 수 없음" 경고 문구를 크게 표시.
-- 모든 숫자 인풋은 슬라이더 + 숫자 입력칸을 함께 제공하고 서로 동기화.
-- "초기값으로 되돌리기" 버튼 제공(CONFIG 기본값으로 복원).
-- 각 창 하단에 접었다 펼 수 있는 "계산식 보기" 패널을 두고 위 계산 로직을 한국어 수식으로 보여준다.
-- 공급처 표의 "근거/출처" 칸은 항상 보이게 한다.
-- 디자인: 깔끔한 흰 배경, 시나리오별 고정 색상(A 파랑, B 초록, C 보라), 큰 글씨(발표용 가독성).
+const COL = { A:'#2563eb', B:'#16a34a', C:'#7c3aed', warn:'#dc2626' };
+const DIV_MINS = { cn:10, x:0, y:0 };
+const BLK_MINS = { x:0, y:0 };
 
-# 8. 작업 방식
-- 먼저 CONFIG 구조와 계산 함수(순수 함수)를 작성하고, 그다음 UI를 연결해라.
-- 계산 함수는 입력값 → 결과 객체를 반환하는 형태로 분리해서 나중에 테스트/수정이 쉽게 해라.
-- 코드 맨 위에 주석으로 "가정값 수정 위치"를 안내해라.
-- 완성 후, 직접 실행해서 기본값에서 (1)-A/B, (2)-A/B/C 결과 숫자가 계산식과 일치하는지 한 번 검증해라.
+let state = clone(CONFIG);
+let blockTab = 'A';
+const bindings = [];
+const $ = id => document.getElementById(id);
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function clamp(v, lo, hi){ return Math.min(Math.max(v, lo), hi); }
+function fmt(n, d){ return Number(n).toLocaleString('ko-KR', { maximumFractionDigits: d === undefined ? 1 : d }); }
+function fmtUSD(n){ return '$' + fmt(n, 0); }
+function supName(id){ return state.suppliers.find(s => s.id === id).name; }
+function sup(id){ return state.suppliers.find(s => s.id === id); }
+
+/* ===== weight rebalancing (keeps sum at 100, respects minimums) ===== */
+function rebalance(w, key, val, keys, mins){
+  const others = keys.filter(k => k !== key);
+  const minOthers = others.reduce((a, k) => a + mins[k], 0);
+  val = Math.round(clamp(val, mins[key], 100 - minOthers));
+  let remaining = 100 - val;
+  let free = others.slice();
+  const res = {}; res[key] = val;
+  while (free.length){
+    const freeOld = free.reduce((a, k) => a + w[k], 0);
+    const tmp = {};
+    free.forEach(k => { tmp[k] = freeOld > 0 ? w[k] / freeOld * remaining : remaining / free.length; });
+    const low = free.find(k => tmp[k] < mins[k]);
+    if (low !== undefined){
+      res[low] = mins[low]; remaining -= mins[low]; free = free.filter(k => k !== low);
+    } else {
+      free.forEach(k => { res[k] = tmp[k]; });
+      break;
+    }
+  }
+  others.forEach(k => { res[k] = Math.round(res[k]); });
+  const diff = 100 - keys.reduce((a, k) => a + res[k], 0);
+  if (diff !== 0 && others.length){
+    const target = others.reduce((a, k) => res[k] > res[a] ? k : a, others[0]);
+    res[target] += diff;
+  }
+  return res;
+}
+
+/* ===== pure calculation functions ===== */
+function summarize(lines, need){
+  const total = lines.reduce((a, l) => a + l.qty, 0);
+  const cost = lines.reduce((a, l) => a + (l.price + l.ship) * l.qty, 0);
+  const time = total > 0 ? lines.reduce((a, l) => a + l.days * l.qty, 0) / total : 0;
+  const cnQty = lines.filter(l => l.id === 'cn').reduce((a, l) => a + l.qty, 0);
+  const cnShare = total > 0 ? cnQty / total * 100 : 0;
+  let shortage = need - total;
+  if (shortage < 1e-6) shortage = 0;
+  return { total, cost, time, cnShare, shortage, need };
+}
+
+function calcDiversify(s, weights){
+  const lines = s.suppliers.map(sp => {
+    const eff = sp.id === 'cn' ? sp.cap * (1 - s.shock / 100) : sp.cap;
+    const target = s.demand * (weights[sp.id] || 0) / 100;
+    return { id: sp.id, qty: Math.min(target, eff), price: sp.price, ship: sp.seaCost, days: sp.seaDays };
+  });
+  return summarize(lines, s.demand);
+}
+
+function calcBlockA(s){
+  const m = s.blockMonths;
+  const need = s.demand / 12 * m;
+  const qty = Math.min(need, s.air.monthlyCap * m);
+  const cn = s.suppliers.find(x => x.id === 'cn');
+  return summarize([{ id:'cn', qty, price: cn.price, ship: s.air.cost, days: s.air.days }], need);
+}
+
+function calcBlockB(s){
+  const m = s.blockMonths;
+  const need = s.demand / 12 * m;
+  const lines = ['x', 'y'].map(id => {
+    const sp = s.suppliers.find(z => z.id === id);
+    const cap = sp.cap / 12 * m;
+    const target = need * (s.blockWeights[id] || 0) / 100;
+    return { id, qty: Math.min(target, cap), price: sp.price, ship: sp.seaCost, days: sp.seaDays };
+  });
+  return summarize(lines, need);
+}
+
+function calcBlockC(s){
+  const m = s.blockMonths;
+  const monthly = s.demand / 12;
+  const need = monthly * m;
+  const qty = Math.min(need, s.stock.amount);
+  const r = summarize([{ id:'stock', qty, price: s.stock.price, ship: 0, days: 0 }], need);
+  r.cnShare = null;
+  r.holdMonths = monthly > 0 ? s.stock.amount / monthly : 0;
+  return r;
+}
+
+/* ===== delta formatting (lower is better for all metrics) ===== */
+function delta(val, base){
+  if (val === null || val === undefined || base === null || base === undefined) return null;
+  if (Math.abs(base) < 1e-9){
+    if (Math.abs(val) < 1e-9) return { text:'±0%', cls:'flat' };
+    return { text:'기준 0 → 증가', cls:'bad' };
+  }
+  const p = (val - base) / base * 100;
+  if (Math.abs(p) < 0.05) return { text:'±0%', cls:'flat' };
+  return { text:(p > 0 ? '+' : '') + p.toFixed(1) + '%', cls: p < 0 ? 'good' : 'bad' };
+}
+
+/* ===== input builders ===== */
+function addSlider(parent, o){
+  const wrap = document.createElement('div'); wrap.className = 'ctl';
+  const lab = document.createElement('label');
+  const range = document.createElement('input'); range.type = 'range';
+  const num = document.createElement('input'); num.type = 'number';
+  [range, num].forEach(i => { i.min = o.min; i.max = o.max; i.step = o.step; });
+  const unit = document.createElement('span'); unit.className = 'unit'; unit.textContent = o.unit || '';
+  wrap.append(lab, range, num, unit);
+  parent.appendChild(wrap);
+  const commit = v => { if (isNaN(v)) return; o.set(clamp(v, +o.min, +o.max)); update(); };
+  range.addEventListener('input', () => commit(parseFloat(range.value)));
+  num.addEventListener('input', () => commit(parseFloat(num.value)));
+  num.addEventListener('change', () => { num.value = o.get(); });
+  bindings.push(() => {
+    lab.textContent = typeof o.label === 'function' ? o.label() : o.label;
+    const v = o.get();
+    range.value = v;
+    if (document.activeElement !== num) num.value = v;
+  });
+}
+
+function addCell(tr, i, key, kind){
+  const td = document.createElement('td');
+  const inp = document.createElement('input');
+  inp.type = kind;
+  if (kind === 'number'){ inp.min = 0; inp.step = 'any'; }
+  td.appendChild(inp); tr.appendChild(td);
+  inp.addEventListener('input', () => {
+    if (kind === 'number'){
+      const v = parseFloat(inp.value);
+      if (isNaN(v)) return;
+      state.suppliers[i][key] = Math.max(0, v);
+    } else {
+      state.suppliers[i][key] = inp.value;
+    }
+    update();
+  });
+  inp.addEventListener('change', () => { inp.value = state.suppliers[i][key]; });
+  bindings.push(() => { if (document.activeElement !== inp) inp.value = state.suppliers[i][key]; });
+}
+
+function buildInputs(){
+  // global
+  addSlider($('globalInputs'), { label:'연간 수입 수요량', min:10, max:500, step:1, unit:'톤',
+    get:() => state.demand, set:v => { state.demand = v; } });
+
+  // supplier table
+  state.suppliers.forEach((sp, i) => {
+    const tr = document.createElement('tr');
+    addCell(tr, i, 'name', 'text');
+    addCell(tr, i, 'cap', 'number');
+    addCell(tr, i, 'price', 'number');
+    addCell(tr, i, 'seaDays', 'number');
+    addCell(tr, i, 'seaCost', 'number');
+    addCell(tr, i, 'note', 'text');
+    $('supBody').appendChild(tr);
+  });
+
+  // window 1
+  addSlider($('divCommon'), { label:'중국 수출 감소율', min:0, max:100, step:1, unit:'%',
+    get:() => state.shock, set:v => { state.shock = v; } });
+  ['cn', 'x', 'y'].forEach(k => {
+    addSlider($('divB-in'), {
+      label: () => supName(k) + ' 비중', min: DIV_MINS[k], max: 100, step: 1, unit: '%',
+      get: () => state.divWeights[k],
+      set: v => { state.divWeights = rebalance(state.divWeights, k, v, ['cn', 'x', 'y'], DIV_MINS); }
+    });
+  });
+
+  // window 2
+  addSlider($('blockCommon'), { label:'차단 기간', min:1, max:12, step:1, unit:'개월',
+    get:() => state.blockMonths, set:v => { state.blockMonths = v; } });
+  addSlider($('blkA-in'), { label:'항공 운송시간', min:1, max:30, step:1, unit:'일',
+    get:() => state.air.days, set:v => { state.air.days = v; } });
+  addSlider($('blkA-in'), { label:'항공 톤당 운송비', min:0, max:10000, step:50, unit:'USD/톤',
+    get:() => state.air.cost, set:v => { state.air.cost = v; } });
+  addSlider($('blkA-in'), { label:'항공 월 최대 수송량', min:0, max:100, step:1, unit:'톤/월',
+    get:() => state.air.monthlyCap, set:v => { state.air.monthlyCap = v; } });
+  ['x', 'y'].forEach(k => {
+    addSlider($('blkB-in'), {
+      label: () => supName(k) + ' 비중', min: 0, max: 100, step: 1, unit: '%',
+      get: () => state.blockWeights[k],
+      set: v => { state.blockWeights = rebalance(state.blockWeights, k, v, ['x', 'y'], BLK_MINS); }
+    });
+  });
+  addSlider($('blkC-in'), { label:'재고 비축량', min:0, max:200, step:1, unit:'톤',
+    get:() => state.stock.amount, set:v => { state.stock.amount = v; } });
+  addSlider($('blkC-in'), { label:'재고 단가', min:0, max:5000, step:10, unit:'USD/톤',
+    get:() => state.stock.price, set:v => { state.stock.price = v; } });
+}
+
+/* ===== output rendering ===== */
+function outputHTML(res, base, baseName, warnText){
+  const metrics = [
+    { k:'cost',     name:'총 조달비용',   f: fmtUSD },
+    { k:'time',     name:'평균 소요시간', f: v => fmt(v, 1) + '일' },
+    { k:'cnShare',  name:'중국 의존도',   f: v => fmt(v, 1) + '%' },
+    { k:'shortage', name:'공급 부족량',   f: v => fmt(v, 1) + '톤' }
+  ];
+  let h = '<div class="metrics">';
+  metrics.forEach(m => {
+    const v = res[m.k];
+    const warn = m.k === 'shortage' && v > 0;
+    const dl = base ? delta(v, base[m.k]) : null;
+    h += '<div class="metric' + (warn ? ' warn' : '') + '">' +
+         '<div class="mname">' + m.name + '</div>' +
+         '<div class="mval">' + (v === null ? '해당 없음' : m.f(v)) + '</div>' +
+         (dl ? '<div class="delta ' + dl.cls + '">' + dl.text + ' <small>(' + baseName + ' 대비)</small></div>' : '') +
+         '</div>';
+  });
+  if (res.holdMonths !== undefined){
+    h += '<div class="metric"><div class="mname">재고로 버틸 수 있는 기간</div>' +
+         '<div class="mval">' + fmt(res.holdMonths, 1) + '개월</div></div>';
+  }
+  h += '</div>';
+  if (res.shortage > 0){
+    h += '<div class="warnbox">⚠ 공급 부족 ' + fmt(res.shortage, 1) + '톤: ' + warnText + '</div>';
+  }
+  return h;
+}
+
+function renderCharts(id, items){
+  const defs = [
+    { k:'cost',     t:'총 조달비용',   f: fmtUSD },
+    { k:'time',     t:'평균 소요시간', f: v => fmt(v, 1) + '일' },
+    { k:'cnShare',  t:'중국 의존도',   f: v => fmt(v, 1) + '%' },
+    { k:'shortage', t:'공급 부족량',   f: v => fmt(v, 1) + '톤' }
+  ];
+  $(id).innerHTML = defs.map(d => {
+    const vals = items.map(i => i.res[d.k]).filter(v => v !== null);
+    const max = Math.max.apply(null, vals.concat([1e-9]));
+    return '<div class="chart"><h4>' + d.t + '</h4>' + items.map(i => {
+      const v = i.res[d.k];
+      if (v === null){
+        return '<div class="brow"><span>' + i.label + '</span><div class="btrack"></div><span class="bval">해당 없음</span></div>';
+      }
+      const color = (d.k === 'shortage' && v > 0) ? COL.warn : i.color;
+      return '<div class="brow"><span>' + i.label + '</span><div class="btrack"><div class="bfill" style="width:' +
+             (v / max * 100) + '%;background:' + color + '"></div></div><span class="bval">' + d.f(v) + '</span></div>';
+    }).join('') + '</div>';
+  }).join('');
+}
+
+function renderDiv(){
+  const A = calcDiversify(state, { cn:100, x:0, y:0 });
+  const B = calcDiversify(state, state.divWeights);
+  const wt = '이 가정에서는 다변화만으로 수요를 채울 수 없음';
+  $('divA-out').innerHTML = outputHTML(A, null, 'A', wt);
+  $('divB-out').innerHTML = outputHTML(B, A, 'A', wt);
+  renderCharts('divCharts', [
+    { label:'A 중국만',   res:A, color:COL.A },
+    { label:'B 일부 대체', res:B, color:COL.B }
+  ]);
+}
+
+function renderBlock(){
+  const A = calcBlockA(state), B = calcBlockB(state), C = calcBlockC(state);
+  const map = { A:A, B:B, C:C };
+  const texts = {
+    A:'항공 수송 한도가 부족해 이 가정에서는 항공만으로 수요를 채울 수 없음',
+    B:'대체국 공급 한도가 부족해 이 가정에서는 다변화만으로 수요를 채울 수 없음',
+    C:'재고만으로는 차단 기간 수요를 채울 수 없음'
+  };
+  $('blockOut').innerHTML = outputHTML(map[blockTab], blockTab === 'B' ? null : B, 'B', texts[blockTab]);
+  $('blockCard').className = 'card ' + blockTab;
+  ['A', 'B', 'C'].forEach(k => $('blk' + k + '-in').classList.toggle('hidden', k !== blockTab));
+  document.querySelectorAll('#blockTabs .stab').forEach(b => b.classList.toggle('active', b.dataset.bt === blockTab));
+
+  const rows = [
+    ['총 조달비용',   r => fmtUSD(r.cost), null],
+    ['평균 소요시간', r => fmt(r.time, 1) + '일', null],
+    ['중국 의존도',   r => r.cnShare === null ? '해당 없음' : fmt(r.cnShare, 1) + '%', null],
+    ['공급 부족량',   r => fmt(r.shortage, 1) + '톤', r => r.shortage > 0],
+    ['재고로 버틸 기간', r => r.holdMonths === undefined ? '-' : fmt(r.holdMonths, 1) + '개월', null]
+  ];
+  let t = '<thead><tr><th>항목</th>' +
+          '<th style="color:' + COL.A + '">A 항공 수입</th>' +
+          '<th style="color:' + COL.B + '">B 전량 대체</th>' +
+          '<th style="color:' + COL.C + '">C 재고 비축</th></tr></thead><tbody>';
+  rows.forEach(row => {
+    t += '<tr><th>' + row[0] + '</th>' + [A, B, C].map(r => {
+      const bad = row[2] && row[2](r);
+      return '<td' + (bad ? ' class="bad"' : '') + '>' + row[1](r) + '</td>';
+    }).join('') + '</tr>';
+  });
+  $('cmpTable').innerHTML = t + '</tbody>';
+
+  renderCharts('blockCharts', [
+    { label:'A 항공',     res:A, color:COL.A },
+    { label:'B 전량 대체', res:B, color:COL.B },
+    { label:'C 재고',     res:C, color:COL.C }
+  ]);
+}
+
+function update(){
+  bindings.forEach(f => f());
+  renderDiv();
+  renderBlock();
+}
+
+/* ===== events ===== */
+document.querySelectorAll('#winTabs .tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#winTabs .tab').forEach(b => b.classList.toggle('active', b === btn));
+    $('win-div').classList.toggle('hidden', btn.dataset.win !== 'div');
+    $('win-block').classList.toggle('hidden', btn.dataset.win !== 'block');
+  });
+});
+document.querySelectorAll('#blockTabs .stab').forEach(btn => {
+  btn.addEventListener('click', () => { blockTab = btn.dataset.bt; renderBlock(); });
+});
+$('resetBtn').addEventListener('click', () => { state = clone(CONFIG); update(); });
+
+buildInputs();
+update();
+</script>
+</body>
+</html>
