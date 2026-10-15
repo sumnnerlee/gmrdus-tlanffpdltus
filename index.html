@@ -529,39 +529,62 @@ update();
 </body>
 </html>
 
-## Simulation Program: Improvements
+## Simulation Program: Update Spec
 
-Modify the existing single-file HTML simulation program as described below. Keep everything else unchanged: the two-window structure, inputs and outputs shown on the same screen, outputs updating instantly when inputs change, and a single HTML file that works without external CDNs.
+Modify the attached single-file HTML simulation program as described below. Keep everything else unchanged: two windows, inputs and outputs on the same screen, outputs update instantly when inputs change, single HTML file with no external CDNs. Keep the existing UI language (Korean labels).
 
-### 1. Add a 3D route map
-- Visualize shipping routes from China, Brazil, and Mozambique to South Korea (Busan) on a map.
-- Implement with Canvas (or CSS/SVG) only, with no external libraries. A tilted map with curved route lines is enough for the 3D effect.
-- Route lines must update when the scenario changes.
-- Use distinct styles per transport mode: solid line for sea, dashed line for air, and a different color for inland (land) segments.
+### Case
+2023 China graphite export controls. Korea imports ~50,000 t/year (~4,160 t/month), simulated over 12 months. Outputs are volume-weighted figures over the 12 months.
 
-### 2. Change scenario C in the "Route Blockage" window
-- Remove the existing "inventory stockpiling" scenario and replace it with "Use another port within China".
-- Scenario C route: Shanghai Port → Tianjin Port → Busan Port.
-- Scenarios A (air freight) and B (import from two non-China countries) keep their existing routes.
-- Split C's inputs by segment:
-  1. Shanghai → Tianjin: transit time and cost
-  2. Tianjin port: customs clearance and handling wait time and cost
-  3. Tianjin → Busan: sea freight time and cost
-- On the map, draw C as a bent route from Shanghai through Tianjin to Busan, with the Shanghai → Tianjin segment shown as dashed or in a different color.
+### Default input data (all editable in the UI)
 
-### 3. Simplify outputs (all scenarios)
-- **Main output:** Landed cost per ton (purchase price + freight + customs/handling). Display it largest.
-- **Sub outputs (2):**
-  - HHI (sum of squared import-share percentages, range 0 to 10,000)
-  - Total lead time in days
-- Show these two smaller than the main output.
-- Add a one-line note next to HHI: "Lower = less dependent on a single country."
-- Remove all other existing outputs.
-- Show scenario comparison as a single bar chart of landed cost per ton.
+| Supplier | Price (USD/t) | Max exportable (t/yr) | Admin factor | Sea transit (days) | Sea freight (USD/t) |
+|---|---|---|---|---|---|
+| China (Shanghai→Busan) | 542 | 1,400,000 | 1.0 | 2 | 20 |
+| Brazil (Santos→Busan) | 1,958 | 65,000 | 0.5 | 40 | 65 |
+| Mozambique (Nacala→Busan) | 750 | 60,000 | 1.5 | 30 | 57.5 |
 
-### 4. Remove
-- Remove all "Basis / Source" fields from the UI.
-- Remove all inventory-related inputs, logic, text, and outputs.
+- Extra admin days per supplier = admin factor × base admin days. Base admin days is an editable input, default 2 (assumption).
+- Air freight, China only: 2 days transit, USD 3,000/t (placeholder assumption).
+- Option for China via Tianjin (Shanghai → Tianjin → Busan):
+  - Shanghai → Tianjin: 3 days, USD 25/t
+  - Tianjin port handling/transshipment wait: 4 days, USD 15/t
+  - Tianjin → Busan: 3.5 days, USD 28/t
+  - Total: 10.5 days, USD 68/t
+- Optional risk inputs, default 0 so base results are unchanged: China export-permit delay (days, applied only when export control is on) and port congestion delay (days, per route).
+- Shock inputs: China export reduction rate (default 30%, range 0 to 100%) and route blocked (on/off).
+
+### Window 1: Supply Diversification (export control shock)
+- A. No export control: China 100%.
+- B. Export control, China only: China volume = demand × (1 − reduction rate).
+- C. Export control with partial substitution: China volume = demand × (1 − reduction rate). The lost volume is split between Brazil and Mozambique (split ratio editable, default 50/50).
+
+### Window 2: Route Blockage (China → Korea sea route blocked)
+- A. Route open: China via Shanghai → Busan direct.
+- B. Air import from China. Show a notice: "Bulk cargo is not normally shipped by air; cost shown is illustrative."
+- C. Full substitution: 100% from Brazil and Mozambique (split editable, default 50/50), by sea.
+- D. Use another port in China: Shanghai → Tianjin → Busan (China only, segment inputs above).
+
+### Calculation
+- Volume per supplier = min(allocated volume, max exportable). If total volume < demand, show a small notice "Unmet demand: X t" and do not add it as an output.
+- Landed cost per ton = purchase price + freight per ton, volume-weighted across suppliers.
+- Lead time (days) = extra admin days + transit days + optional delays, volume-weighted across suppliers.
+- HHI = sum of squared import-share percentages (0 to 10,000).
+
+### Outputs (all scenarios, nothing else)
+- **Main:** landed cost per ton (USD/t), displayed largest.
+- **Sub 1:** HHI, with a one-line note: "Lower = less dependent on a single country."
+- **Sub 2:** lead time (days).
+- One bar chart comparing landed cost per ton across the scenarios in the current window.
+
+### 3D route map
+- Canvas/SVG only, no external libraries. Tilted map with curved route lines, updating with the selected scenario.
+- Nodes (lat, lon): Shanghai (31.2, 121.5), Tianjin (39.0, 117.7), Busan (35.1, 129.0), Santos (-24.0, -46.3), Nacala (-14.5, 40.7). Routes are schematic.
+- Style: solid = sea, dashed = air, different color = inland/coastal segment. Scenario D is drawn as a bent route Shanghai → Tianjin → Busan, with Shanghai → Tianjin styled differently.
+
+### Remove
+- All "Basis / Source" fields in the UI.
+- All inventory-related inputs, logic, text, and outputs.
 
 ### Deliverable
-After the changes, briefly summarize only what was changed.
+Briefly summarize only what changed.
