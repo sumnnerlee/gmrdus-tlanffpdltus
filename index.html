@@ -528,3 +528,40 @@ update();
 </script>
 </body>
 </html>
+
+## Simulation Program: Improvements
+
+Modify the existing single-file HTML simulation program as described below. Keep everything else unchanged: the two-window structure, inputs and outputs shown on the same screen, outputs updating instantly when inputs change, and a single HTML file that works without external CDNs.
+
+### 1. Add a 3D route map
+- Visualize shipping routes from China, Brazil, and Mozambique to South Korea (Busan) on a map.
+- Implement with Canvas (or CSS/SVG) only, with no external libraries. A tilted map with curved route lines is enough for the 3D effect.
+- Route lines must update when the scenario changes.
+- Use distinct styles per transport mode: solid line for sea, dashed line for air, and a different color for inland (land) segments.
+
+### 2. Change scenario C in the "Route Blockage" window
+- Remove the existing "inventory stockpiling" scenario and replace it with "Use another port within China".
+- Scenario C route: Shanghai Port → Tianjin Port → Busan Port.
+- Scenarios A (air freight) and B (import from two non-China countries) keep their existing routes.
+- Split C's inputs by segment:
+  1. Shanghai → Tianjin: transit time and cost
+  2. Tianjin port: customs clearance and handling wait time and cost
+  3. Tianjin → Busan: sea freight time and cost
+- On the map, draw C as a bent route from Shanghai through Tianjin to Busan, with the Shanghai → Tianjin segment shown as dashed or in a different color.
+
+### 3. Simplify outputs (all scenarios)
+- **Main output:** Landed cost per ton (purchase price + freight + customs/handling). Display it largest.
+- **Sub outputs (2):**
+  - HHI (sum of squared import-share percentages, range 0 to 10,000)
+  - Total lead time in days
+- Show these two smaller than the main output.
+- Add a one-line note next to HHI: "Lower = less dependent on a single country."
+- Remove all other existing outputs.
+- Show scenario comparison as a single bar chart of landed cost per ton.
+
+### 4. Remove
+- Remove all "Basis / Source" fields from the UI.
+- Remove all inventory-related inputs, logic, text, and outputs.
+
+### Deliverable
+After the changes, briefly summarize only what was changed.
