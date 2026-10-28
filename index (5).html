@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>흑연 공급망 시나리오 비교 도구</title>
+<style>
+  :root{--A:#2563eb;--B:#16a34a;--C:#7c3aed;--warn:#dc2626;--bad:#ea580c;--good:#16a34a;--ink:#111827;--muted:#6b7280;--line:#e5e7eb;--bg:#fff;--soft:#f9fafb}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;font-size:16px;line-height:1.5}
+  header{padding:22px 28px 10px}
+  h1{margin:0;font-size:28px}
+  .sub{margin:4px 0 0;color:var(--muted)}
+  .tabs{display:flex;gap:8px;padding:10px 28px;border-bottom:2px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+  .tab{font:inherit;font-size:17px;font-weight:700;padding:10px 22px;border:2px solid var(--line);background:var(--soft);border-radius:10px;cursor:pointer}
+  .tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  main{padding:18px 28px 40px;max-width:1280px;margin:0 auto}
+  h2{font-size:24px;margin:18px 0 10px}
+  h2 span{display:block;font-size:15px;font-weight:400;color:var(--muted);margin-top:2px}
+  h3{margin:0 0 10px;font-size:19px}
+  h4{margin:0 0 6px;font-size:16px}
+  .panel{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0;background:var(--bg)}
+  details.panel>summary{cursor:pointer;font-weight:700;font-size:18px}
+  .hidden{display:none !important}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:860px){.two-col{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line);border-top:6px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--bg)}
+  .card.A{border-top-color:var(--A)}.card.B{border-top-color:var(--B)}.card.C{border-top-color:var(--C)}
+  .card h3.A{color:var(--A)}.card h3.B{color:var(--B)}.card h3.C{color:var(--C)}
+  .ctl{display:grid;grid-template-columns:minmax(120px,1.3fr) 2fr 100px auto;gap:8px;align-items:center;margin:6px 0}
+  .ctl label{font-weight:600;font-size:15px}
+  .ctl input[type=range]{width:100%}
+  .ctl input[type=number]{width:100px;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px}
+  .unit{color:var(--muted);font-size:14px;min-width:52px}
+  .hint{color:var(--muted);font-size:14px;margin:4px 0 8px}
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .metric{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--soft)}
+  .metric.main{grid-column:1 / -1;background:#fff;border-width:2px;border-color:var(--ink)}
+  .mname{font-size:14px;color:var(--muted)}
+  .mval{font-size:22px;font-weight:800}
+  .metric.main .mval{font-size:34px}
+  .delta{font-size:14px;font-weight:700}
+  .delta small{font-weight:400;color:var(--muted)}
+  .delta.good{color:var(--good)}.delta.bad{color:var(--bad)}.delta.flat{color:var(--muted)}
+  .hhi{margin-top:10px;padding:8px 12px;background:var(--soft);border:1px dashed var(--line);border-radius:8px;font-size:14px}
+  .warnbox{margin-top:12px;padding:12px 14px;border:2px solid var(--warn);background:#fef2f2;color:var(--warn);font-weight:800;font-size:16px;border-radius:10px}
+  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:10px}
+  .chart{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .brow{display:grid;grid-template-columns:110px 1fr 100px;gap:8px;align-items:center;margin:5px 0;font-size:14px}
+  .btrack{background:#f3f4f6;border-radius:6px;height:18px;overflow:hidden}
+  .bfill{height:100%;border-radius:6px;transition:width .2s}
+  .bval{text-align:right;font-weight:700}
+  .tablewrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:15px}
+  th,td{border:1px solid var(--line);padding:6px 8px;text-align:left}
+  th{background:var(--soft)}
+  td input[type=number]{width:100px;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px}
+  td input[type=text]{width:100%;min-width:100px;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px}
+  td.bad{background:#fef2f2;color:var(--warn);font-weight:800}
+  .subtabs{display:flex;gap:8px;margin:12px 0 0;flex-wrap:wrap}
+  .stab{font:inherit;font-weight:700;padding:8px 16px;border:2px solid var(--line);background:var(--soft);border-radius:10px 10px 0 0;cursor:pointer}
+  .stab.active.A{background:var(--A);border-color:var(--A);color:#fff}
+  .stab.active.B{background:var(--B);border-color:var(--B);color:#fff}
+  .stab.active.C{background:var(--C);border-color:var(--C);color:#fff}
+  button.reset{font:inherit;font-weight:700;margin-top:10px;padding:8px 16px;border-radius:8px;border:2px solid var(--ink);background:#fff;cursor:pointer}
+  .maphead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .maphead h3{margin:0}
+  .mbtns{display:flex;gap:8px}
+  .mbtn{font:inherit;font-weight:700;padding:6px 14px;border-radius:8px;border:2px solid var(--ink);background:#fff;cursor:pointer}
+  .mbtn.on{background:var(--ink);color:#fff}
+  details.formula{margin:12px 0}
+  details.formula summary{cursor:pointer;font-weight:700}
+  details.formula pre{white-space:pre-wrap;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:14px;font-family:inherit}
+  .map{width:100%;height:auto;background:#dbeafe;border:1px solid var(--line);border-radius:12px;display:block;margin-top:10px}
+  .land{fill:#f1ede4;stroke:#6b7280;stroke-width:1.2;stroke-linejoin:round}
+  .border{fill:none;stroke:#9ca3af;stroke-width:1.2;stroke-dasharray:4 3}
+  .cl{font-weight:800;fill:#111827;paint-order:stroke;stroke:#fff;stroke-width:3px}
+  .sea{font-style:italic;fill:#3b6ea5;opacity:.8}
+  .cty{fill:#9ca3af;font-weight:700}
+  footer{padding:14px 28px 30px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <h1>흑연 공급망 시나리오 비교 도구</h1>
+  <p class="sub">2023년 중국 흑연 수출통제 사례 · 한국의 조달 시나리오 비교 (가정값 기반)</p>
+</header>
+
+<nav class="tabs" id="winTabs">
+  <button class="tab active" data-win="div">공급망 다변화</button>
+  <button class="tab" data-win="block">경로 차단</button>
+</nav>
+
+<main>
+  <details class="panel" open>
+    <summary>공통 인풋 (두 창이 함께 사용)</summary>
+    <div id="globalInputs" style="margin-top:8px"></div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>공급처</th><th>연간 최대 공급 가능량(톤)</th><th>톤당 가격(USD)</th>
+            <th>해상 운송시간(일)</th><th>항만·통관 시간(일)</th><th>해상 톤당 운송비(USD)</th>
+          </tr>
+        </thead>
+        <tbody id="supBody"></tbody>
+      </table>
+    </div>
+    <button class="reset" id="resetBtn">초기값으로 되돌리기</button>
+  </details>
+
+  <!-- Window 1 -->
+  <section id="win-div">
+    <h2>공급망 다변화<span>질문: 공급처를 다변화하면 수출통제 충격이 얼마나 줄어드나?</span></h2>
+    <div class="panel" id="divCommon"></div>
+    <div class="two-col">
+      <div class="card A">
+        <h3 class="A">시나리오 A · 중국만 수입 (기준)</h3>
+        <p class="hint">중국 비중 100% 고정. 수출 감소율만큼 중국 공급 가능량이 줄어듭니다.</p>
+        <div id="divA-out"></div>
+      </div>
+      <div class="card B">
+        <h3 class="B">시나리오 B · 일부 대체 (공급처 다변화)</h3>
+        <div id="divB-in"></div>
+        <p class="hint">비중 합계는 항상 100%로 자동 보정됩니다. 중국 비중은 최소 10%입니다.</p>
+        <div id="divB-out"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="maphead">
+        <h3>항로 지도 (시나리오 B)</h3>
+        <div class="mbtns" data-maps="map-div">
+          <button class="mbtn on" data-play="1">▶ 시작</button>
+          <button class="mbtn" data-play="0">⏸ 멈춤</button>
+        </div>
+      </div>
+      <svg id="map-div" class="map"></svg>
+      <p class="hint">개략 지도입니다. 선의 굵기는 물량 비중, 배의 속도는 소요일(상대값)을 반영합니다.</p>
+    </div>
+    <div class="panel"><h3>비교 그래프</h3><div class="charts" id="divCharts"></div></div>
+    <details class="formula">
+      <summary>계산식 보기</summary>
+      <pre>
+중국 실제 공급 가능량 = 중국 최대 공급량 × (1 − 수출 감소율)
+다른 공급처 실제 공급 가능량 = 최대 공급량
+목표 물량 = 수요 × 비중
+실제 물량 = min(목표 물량, 실제 공급 가능량)
+톤당 도착비용 = Σ (톤당 가격 + 톤당 운송비) × 실제 물량 ÷ 총 실제 물량
+소요일 = Σ ((해상 운송시간 + 항만·통관 시간) × 실제 물량) ÷ 총 실제 물량
+HHI = 공급처별 비중(%)을 각각 제곱해서 더한 값
+      예) 중국 60%, 브라질 20%, 모잠비크 20% → 60² + 20² + 20² = 4,400
+      (10,000 = 한 나라에만 의존, 값이 작을수록 여러 나라로 분산)
+공급 부족량 = max(0, 수요 − 총 실제 물량)  (부족할 때만 경고로 표시)
+증감률 = (B − A) ÷ A × 100</pre>
+    </details>
+  </section>
+
+  <!-- Window 2 -->
+  <section id="win-block" class="hidden">
+    <h2>경로 차단<span>질문: 상하이항이 갑자기 막혔을 때 어떤 대응이 나은가?</span></h2>
+    <div class="panel" id="blockCommon"></div>
+    <div class="subtabs" id="blockTabs">
+      <button class="stab A active" data-bt="A">A · 항공 수입</button>
+      <button class="stab B" data-bt="B">B · 다른 수출국 전량 대체 (기준)</button>
+      <button class="stab C" data-bt="C">C · 철도로 톈진항 이동 후 해상</button>
+    </div>
+    <div class="card A" id="blockCard">
+      <div id="blkA-in"><p class="hint">중국에서 항공으로 수입합니다. 항공 월 최대 수송량이 부족하면 공급 부족이 발생합니다.</p></div>
+      <div id="blkB-in" class="hidden"><p class="hint">중국 0% 고정. 브라질과 모잠비크가 차단 기간 수요 전량을 충당해야 합니다.</p></div>
+      <div id="blkC-in" class="hidden"><p class="hint">상하이항이 막혀서, 상하이에서 톈진까지 철도로 옮긴 뒤 톈진항에서 배로 부산까지 들어옵니다.</p></div>
+      <div id="blockOut"></div>
+    </div>
+    <div class="panel">
+      <div class="maphead">
+        <h3>항로 지도 (선택한 시나리오)</h3>
+        <div class="mbtns" data-maps="map-zoom,map-wide">
+          <button class="mbtn on" data-play="1">▶ 시작</button>
+          <button class="mbtn" data-play="0">⏸ 멈춤</button>
+        </div>
+      </div>
+      <svg id="map-zoom" class="map"></svg>
+      <svg id="map-wide" class="map hidden"></svg>
+      <p class="hint">빨간 점선 ✖ = 막힌 상하이항발 직항로. C의 갈색 점선은 철도(상하이 → 톈진)입니다. A·C는 상하이·톈진·부산 일대를 확대한 지도, B는 세계 항로 지도입니다. 개략 지도이며 배의 속도는 소요일(상대값)을 반영합니다.</p>
+    </div>
+    <div class="panel">
+      <h3>3개 시나리오 비교 (차단 기간 기준)</h3>
+      <div class="tablewrap"><table id="cmpTable"></table></div>
+      <div class="charts" id="blockCharts"></div>
+    </div>
+    <details class="formula">
+      <summary>계산식 보기</summary>
+      <pre>
+기준 수요 = 연간 수요 ÷ 12 × 차단 기간(개월)
+공급처 공급 가능량 = 연간 최대 공급량 ÷ 12 × 차단 기간(개월)
+
+[A 항공] 실제 물량 = min(기준 수요, 항공 월 최대 수송량 × 차단 기간)
+         톤당 비용 = 중국 톤당 가격 + 항공 톤당 운송비, 소요일 = 항공 운송시간 + 중국 항만·통관 시간
+[B 전량 대체] 중국 0%, 목표 물량 = 기준 수요 × 비중
+         실제 물량 = min(목표 물량, 공급 가능량), 톤당 비용 = 톤당 가격 + 해상 운송비
+[C 철도 + 톈진항] 상하이항 봉쇄 → 상하이~톈진 철도 → 톈진항~부산 해상
+         실제 물량 = min(기준 수요, 중국 공급 가능량)
+         톤당 비용 = 중국 톤당 가격 + 철도 톤당 운임 + 톈진~부산 해상 운임
+         소요일 = 철도 소요시간 + 톈진~부산 해상 소요시간 + 중국 항만·통관 시간
+
+톤당 도착비용 = Σ (톤당 가격 + 톤당 운송비) × 실제 물량 ÷ 총 실제 물량
+HHI = 공급처별 비중(%)을 각각 제곱해서 더한 값
+      예) B에서 브라질 50%, 모잠비크 50% → 50² + 50² = 5,000 / A와 C는 중국 100% → 100² = 10,000
+공급 부족량 = max(0, 기준 수요 − 실제 물량)
+증감률 = (해당 시나리오 − B) ÷ B × 100</pre>
+    </details>
+  </section>
+</main>
+
+<footer>본 도구는 가정값에 기반한 시나리오 비교용이며 실제 예측이 아닙니다.</footer>
+
+<script>
+/* ===== CONFIG: assumptions. Edit the numbers here after research. ===== */
+const CONFIG = {
+  demand: 50000,                     // annual import demand (tons)
+  shock: 30,                         // China export reduction rate (%)
+  blockMonths: 3,                    // route blockage duration (months)
+  suppliers: [
+    { id:'cn', name:'중국',       cap:60000, price:542,  seaDays:5,  handling:2, seaCost:20  },
+    { id:'br', name:'브라질',     cap:15000, price:1958, seaDays:40, handling:2, seaCost:120 },
+    { id:'mz', name:'모잠비크',   cap:12000, price:750,  seaDays:30, handling:2, seaCost:90  }
+  ],
+  air:     { days:3, cost:3000, monthlyCap:500 },   // air import (scenario A)
+  rail:    { days:4,   cost:38 },                   // Shanghai -> Tianjin by rail (scenario C)
+  tjSea:   { days:6.5, cost:30 },                   // Tianjin port -> Busan by sea (scenario C)
+  divWeights:   { cn:60, br:20, mz:20 },
+  blockWeights: { br:50, mz:50 }
+};
+/* ===== end CONFIG ===== */
+
+const COL = { A:'#2563eb', B:'#16a34a', C:'#7c3aed', warn:'#dc2626' };
+const DIV_MINS = { cn:10, br:0, mz:0 };
+const BLK_MINS = { br:0, mz:0 };
+
+let state = clone(CONFIG);
+let blockTab = 'A';
+const bindings = [];
+const $ = id => document.getElementById(id);
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function clamp(v, lo, hi){ return Math.min(Math.max(v, lo), hi); }
+function fmt(n, d){ return Number(n).toLocaleString('ko-KR', { maximumFractionDigits: d === undefined ? 1 : d }); }
+function fmtUSD(n){ return '$' + fmt(n, 0); }
+function sup(id){ return state.suppliers.find(s => s.id === id); }
+function supName(id){ return sup(id).name; }
+
+/* ===== weight rebalancing (keeps sum at 100, respects minimums) ===== */
+function rebalance(w, key, val, keys, mins){
+  const others = keys.filter(k => k !== key);
+  const minOthers = others.reduce((a, k) => a + mins[k], 0);
+  val = Math.round(clamp(val, mins[key], 100 - minOthers));
+  let remaining = 100 - val;
+  let free = others.slice();
+  const res = {}; res[key] = val;
+  while (free.length){
+    const freeOld = free.reduce((a, k) => a + w[k], 0);
+    const tmp = {};
+    free.forEach(k => { tmp[k] = freeOld > 0 ? w[k] / freeOld * remaining : remaining / free.length; });
+    const low = free.find(k => tmp[k] < mins[k]);
+    if (low !== undefined){
+      res[low] = mins[low]; remaining -= mins[low]; free = free.filter(k => k !== low);
+    } else {
+      free.forEach(k => { res[k] = tmp[k]; });
+      break;
+    }
+  }
+  others.forEach(k => { res[k] = Math.round(res[k]); });
+  const diff = 100 - keys.reduce((a, k) => a + res[k], 0);
+  if (diff !== 0 && others.length){
+    const target = others.reduce((a, k) => res[k] > res[a] ? k : a, others[0]);
+    res[target] += diff;
+  }
+  return res;
+}
+
+/* ===== pure calculation functions ===== */
+function summarize(lines, need){
+  const total = lines.reduce((a, l) => a + l.qty, 0);
+  const cost = lines.reduce((a, l) => a + (l.price + l.ship) * l.qty, 0);
+  const landed = total > 0 ? cost / total : 0;
+  const days = total > 0 ? lines.reduce((a, l) => a + l.days * l.qty, 0) / total : 0;
+  const hhi = total > 0 ? lines.reduce((a, l) => a + Math.pow(l.qty / total * 100, 2), 0) : 0;
+  let shortage = need - total;
+  if (shortage < 1e-6) shortage = 0;
+  return { landed, hhi, days, shortage, total, need, lines };
+}
+
+function calcDiversify(s, weights){
+  const lines = s.suppliers.map(sp => {
+    const eff = sp.id === 'cn' ? sp.cap * (1 - s.shock / 100) : sp.cap;
+    const target = s.demand * (weights[sp.id] || 0) / 100;
+    return { id: sp.id, qty: Math.min(target, eff), price: sp.price, ship: sp.seaCost, days: sp.seaDays + sp.handling };
+  });
+  return summarize(lines, s.demand);
+}
+
+function calcBlockA(s){
+  const m = s.blockMonths, cn = sup('cn');
+  const need = s.demand / 12 * m;
+  const qty = Math.min(need, s.air.monthlyCap * m);
+  return summarize([{ id:'cn', qty, price: cn.price, ship: s.air.cost, days: s.air.days + cn.handling }], need);
+}
+
+function calcBlockB(s){
+  const m = s.blockMonths;
+  const need = s.demand / 12 * m;
+  const lines = ['br', 'mz'].map(id => {
+    const sp = sup(id);
+    const target = need * (s.blockWeights[id] || 0) / 100;
+    return { id, qty: Math.min(target, sp.cap / 12 * m), price: sp.price, ship: sp.seaCost, days: sp.seaDays + sp.handling };
+  });
+  return summarize(lines, need);
+}
+
+function calcBlockC(s){
+  const m = s.blockMonths, cn = sup('cn');
+  const need = s.demand / 12 * m;
+  const qty = Math.min(need, cn.cap / 12 * m);
+  return summarize([{ id:'cn', qty, price: cn.price, ship: s.rail.cost + s.tjSea.cost, days: s.rail.days + s.tjSea.days + cn.handling }], need);
+}
+
+/* ===== delta formatting (lower is better for all metrics) ===== */
+function delta(val, base){
+  if (val === null || val === undefined || base === null || base === undefined) return null;
+  if (Math.abs(base) < 1e-9){
+    if (Math.abs(val) < 1e-9) return { text:'±0%', cls:'flat' };
+    return { text:'기준 0 → 증가', cls:'bad' };
+  }
+  const p = (val - base) / base * 100;
+  if (Math.abs(p) < 0.05) return { text:'±0%', cls:'flat' };
+  return { text:(p > 0 ? '+' : '') + p.toFixed(1) + '%', cls: p < 0 ? 'good' : 'bad' };
+}
+
+/* ===== input builders ===== */
+function addSlider(parent, o){
+  const wrap = document.createElement('div'); wrap.className = 'ctl';
+  const lab = document.createElement('label');
+  const range = document.createElement('input'); range.type = 'range';
+  const num = document.createElement('input'); num.type = 'number';
+  [range, num].forEach(i => { i.min = o.min; i.max = o.max; i.step = o.step; });
+  const unit = document.createElement('span'); unit.className = 'unit'; unit.textContent = o.unit || '';
+  wrap.append(lab, range, num, unit);
+  parent.appendChild(wrap);
+  const commit = v => { if (isNaN(v)) return; o.set(clamp(v, +o.min, +o.max)); update(); };
+  range.addEventListener('input', () => commit(parseFloat(range.value)));
+  num.addEventListener('input', () => commit(parseFloat(num.value)));
+  num.addEventListener('change', () => { num.value = o.get(); });
+  bindings.push(() => {
+    lab.textContent = typeof o.label === 'function' ? o.label() : o.label;
+    const v = o.get();
+    range.value = v;
+    if (document.activeElement !== num) num.value = v;
+  });
+}
+
+function addCell(tr, i, key, kind){
+  const td = document.createElement('td');
+  const inp = document.createElement('input');
+  inp.type = kind;
+  if (kind === 'number'){ inp.min = 0; inp.step = 'any'; }
+  td.appendChild(inp); tr.appendChild(td);
+  inp.addEventListener('input', () => {
+    if (kind === 'number'){
+      const v = parseFloat(inp.value);
+      if (isNaN(v)) return;
+      state.suppliers[i][key] = Math.max(0, v);
+    } else {
+      state.suppliers[i][key] = inp.value;
+    }
+    update();
+  });
+  inp.addEventListener('change', () => { inp.value = state.suppliers[i][key]; });
+  bindings.push(() => { if (document.activeElement !== inp) inp.value = state.suppliers[i][key]; });
+}
+
+function buildInputs(){
+  addSlider($('globalInputs'), { label:'연간 수입 수요량', min:1000, max:200000, step:500, unit:'톤',
+    get:() => state.demand, set:v => { state.demand = v; } });
+
+  state.suppliers.forEach((sp, i) => {
+    const tr = document.createElement('tr');
+    addCell(tr, i, 'name', 'text');
+    ['cap', 'price', 'seaDays', 'handling', 'seaCost'].forEach(k => addCell(tr, i, k, 'number'));
+    $('supBody').appendChild(tr);
+  });
+
+  // window 1
+  addSlider($('divCommon'), { label:'중국 수출 감소율', min:0, max:100, step:1, unit:'%',
+    get:() => state.shock, set:v => { state.shock = v; } });
+  ['cn', 'br', 'mz'].forEach(k => {
+    addSlider($('divB-in'), {
+      label: () => supName(k) + ' 비중', min: DIV_MINS[k], max: 100, step: 1, unit: '%',
+      get: () => state.divWeights[k],
+      set: v => { state.divWeights = rebalance(state.divWeights, k, v, ['cn', 'br', 'mz'], DIV_MINS); }
+    });
+  });
+
+  // window 2
+  addSlider($('blockCommon'), { label:'차단 기간', min:1, max:12, step:1, unit:'개월',
+    get:() => state.blockMonths, set:v => { state.blockMonths = v; } });
+  addSlider($('blkA-in'), { label:'항공 운송시간', min:1, max:30, step:1, unit:'일',
+    get:() => state.air.days, set:v => { state.air.days = v; } });
+  addSlider($('blkA-in'), { label:'항공 톤당 운송비', min:0, max:10000, step:50, unit:'USD/톤',
+    get:() => state.air.cost, set:v => { state.air.cost = v; } });
+  addSlider($('blkA-in'), { label:'항공 월 최대 수송량', min:0, max:5000, step:10, unit:'톤/월',
+    get:() => state.air.monthlyCap, set:v => { state.air.monthlyCap = v; } });
+  ['br', 'mz'].forEach(k => {
+    addSlider($('blkB-in'), {
+      label: () => supName(k) + ' 비중', min: 0, max: 100, step: 1, unit: '%',
+      get: () => state.blockWeights[k],
+      set: v => { state.blockWeights = rebalance(state.blockWeights, k, v, ['br', 'mz'], BLK_MINS); }
+    });
+  });
+  addSlider($('blkC-in'), { label:'철도 소요시간 (상하이→톈진)', min:1, max:20, step:0.5, unit:'일',
+    get:() => state.rail.days, set:v => { state.rail.days = v; } });
+  addSlider($('blkC-in'), { label:'철도 톤당 운임', min:0, max:300, step:1, unit:'USD/톤',
+    get:() => state.rail.cost, set:v => { state.rail.cost = v; } });
+  addSlider($('blkC-in'), { label:'해상 소요시간 (톈진→부산)', min:1, max:20, step:0.5, unit:'일',
+    get:() => state.tjSea.days, set:v => { state.tjSea.days = v; } });
+  addSlider($('blkC-in'), { label:'해상 톤당 운임 (톈진→부산)', min:0, max:300, step:1, unit:'USD/톤',
+    get:() => state.tjSea.cost, set:v => { state.tjSea.cost = v; } });
+}
+
+/* ===== output rendering ===== */
+const METRICS = [
+  { k:'landed', name:'톤당 도착비용', f: v => fmtUSD(v) + '/톤', main:true },
+  { k:'hhi',    name:'HHI (공급처 집중도)', f: v => fmt(v, 0) },
+  { k:'days',   name:'소요일', f: v => fmt(v, 1) + '일' }
+];
+
+// Plain-language HHI explanation: "share² + share² ... = HHI"
+function hhiHTML(res){
+  if (res.total <= 0) return '';
+  const parts = res.lines.filter(l => l.qty > 1e-6);
+  const names = parts.map(l => supName(l.id) + ' 비중²').join(' + ');
+  const nums = parts.map(l => fmt(l.qty / res.total * 100, 0) + '²').join(' + ');
+  return '<div class="hhi"><b>HHI 계산:</b> ' + names + '<br>= ' + nums + ' = <b>' + fmt(res.hhi, 0) +
+         '</b><br><small>10,000 = 한 나라에만 의존 / 값이 작을수록 여러 나라로 분산</small></div>';
+}
+
+function outputHTML(res, base, baseName, warnText){
+  let h = '<div class="metrics">';
+  METRICS.forEach(m => {
+    const dl = base ? delta(res[m.k], base[m.k]) : null;
+    h += '<div class="metric' + (m.main ? ' main' : '') + '">' +
+         '<div class="mname">' + m.name + '</div>' +
+         '<div class="mval">' + m.f(res[m.k]) + '</div>' +
+         (dl ? '<div class="delta ' + dl.cls + '">' + dl.text + ' <small>(' + baseName + ' 대비)</small></div>' : '') +
+         '</div>';
+  });
+  h += '</div>' + hhiHTML(res);
+  if (res.shortage > 0){
+    h += '<div class="warnbox">⚠ 공급 부족 ' + fmt(res.shortage, 0) + '톤: ' + warnText + '</div>';
+  }
+  return h;
+}
+
+function renderCharts(id, items){
+  $(id).innerHTML = METRICS.map(d => {
+    const max = Math.max.apply(null, items.map(i => i.res[d.k]).concat([1e-9]));
+    return '<div class="chart"><h4>' + d.name + '</h4>' + items.map(i => {
+      const v = i.res[d.k];
+      return '<div class="brow"><span>' + i.label + '</span><div class="btrack"><div class="bfill" style="width:' +
+             (v / max * 100) + '%;background:' + i.color + '"></div></div><span class="bval">' + d.f(v) + '</span></div>';
+    }).join('') + '</div>';
+  }).join('');
+}
+
+/* ===== 2D route maps (schematic, no external libraries) =====
+   Each map has its own bounding box [lonMin, latMin, lonMax, latMax] and pixel size. */
+const LAND = {
+  // --- world (wide map) ---
+  eurasia:[[-9,37],[-9,43],[0,50],[10,55],[30,70],[100,78],[180,70],[180,62],[160,58],[142,53],[140,46],[131,43],[129.5,37],[129.2,35.1],[126.5,34.5],[126,37.5],[124.5,40],[121,40.5],[118,39],[119,37.2],[122.7,37.4],[120,35],[121,32],[122,30],[120,26],[116,22.5],[110,20.5],[108,15],[106.5,10.5],[105,8.7],[100.5,13.5],[100,6],[103,1.4],[101,2.5],[98.5,8],[98,16],[94,17],[92,21.5],[88,22],[86,20],[80,15],[80,10],[77.5,8],[73,16],[72,21],[68,23.5],[62,25],[57,26],[59.5,22.5],[55,17],[52,16],[43,12.5],[39,21],[35,28],[34.5,31],[35.5,36],[30,36.5],[27,37],[26.5,40],[23,40],[24,38],[21.5,37],[19.5,40],[13,45.5],[12.5,44],[16.5,41],[18.5,40],[16,38],[12,42],[8.7,44.3],[3,43],[-0.5,38.5],[-5.5,36]],
+  africa:[[-17,21],[-17,15],[-8,4.5],[9,4],[9,-2],[12,-6],[12.5,-18],[15,-27],[18,-34],[20,-35],[27,-33.5],[32,-28],[35,-24],[35,-17],[40.5,-15],[40.5,-10],[39,-5],[42,-1],[48,5],[51,11.5],[43.3,11.7],[39,16],[35,25],[32.5,30],[32,31.3],[20,31],[10,37],[-6,35.8],[-10,30],[-13,27.5]],
+  samerica:[[-80,-1],[-78,2],[-72,11.5],[-62,10.5],[-52,5],[-50,0],[-35,-5.5],[-35,-9],[-39,-15],[-41,-22],[-48,-26],[-53,-34],[-58,-38.5],[-65,-41],[-67,-47],[-69,-52.5],[-74,-50],[-73,-40],[-71.5,-30],[-70.2,-18],[-76,-14],[-81,-5]],
+  madagascar:[[44,-25],[47,-25],[50,-15],[49,-12],[44,-17]],
+  japan:[[130,31],[135,34],[140,35],[142,39],[141,45],[139,40],[136,37],[131,34]],
+  // --- East Asia detail (zoom map): coastlines of China / Korea / Japan ---
+  china:[[110,44],[131,44],[131,42.6],[130.6,42.3],[128,42],[126,41.2],[124.4,40],[123,39.65],[122,39.2],[121.7,38.9],[121.2,38.75],[121.3,39.2],[121.8,40],[122.2,40.65],[121.8,40.9],[121,40.8],[120.4,40.3],[119.8,40],[119.3,39.6],[118.6,39.15],[117.75,38.95],[117.9,38.4],[118.5,38],[119,37.7],[119.2,37.25],[119.8,37.15],[120.3,37.65],[120.8,37.85],[121.4,37.55],[122.1,37.5],[122.7,37.4],[122.5,36.9],[121.2,36.7],[120.3,36.05],[119.5,35.4],[119.4,34.75],[120.5,33.5],[121.2,32.2],[121.9,31.7],[121.95,30.9],[121.3,30.6],[120.8,30.4],[121.3,30.2],[121.9,29.95],[122,29.5],[121.7,28.7],[121.4,28],[121,27.5],[120.7,26],[110,26]],
+  korea:[[124.4,40],[126,41.2],[128,42],[130.6,42.3],[129.7,41],[128.4,40],[127.5,39.2],[128.5,38.3],[129.4,37.3],[129.45,36],[129.1,35.15],[128.6,34.85],[127.6,34.6],[126.9,34.4],[126.4,34.35],[126.3,34.8],[126.7,35.3],[126.5,36],[126.6,36.8],[126.6,37.5],[125.6,37.7],[125.2,38.5],[125.3,39.6]],
+  jeju:[[126.15,33.3],[126.5,33.55],[126.95,33.45],[126.9,33.2],[126.4,33.1]],
+  kyushu:[[129.8,33.2],[130.2,32.3],[130.4,31.2],[131.2,31.4],[131.9,32.8],[131.5,33.6],[130.9,33.9],[130,33.6]],
+  honshu:[[130.9,34],[132,34.2],[133.3,34.8],[132,35.5],[131,34.8]]
+};
+
+const WIDE_LAND = ['eurasia', 'africa', 'samerica', 'madagascar', 'japan'];
+const MAPS = {
+  'map-div':  { box:[-60,-45,140,45], W:1000, H:450, fs:15, k:1.4, land:WIDE_LAND, wide:true },
+  'map-wide': { box:[-60,-45,140,45], W:1000, H:450, fs:15, k:1.4, land:WIDE_LAND, wide:true },
+  'map-zoom': { box:[114.5,29,131.5,42], W:640, H:600, fs:13, k:1, land:['china','korea','jeju','kyushu','honshu'], wide:false }
+};
+function proj(id, p){
+  const m = MAPS[id], b = m.box;
+  return [(p[0] - b[0]) / (b[2] - b[0]) * m.W, (b[3] - p[1]) / (b[3] - b[1]) * m.H];
+}
+
+// Port coordinates [lon, lat]
+const PORT = { busan:[129.1,35.1], shanghai:[121.9,31.1], tianjin:[117.75,38.95], santos:[-46.3,-23.9], nacala:[40.7,-14.5] };
+const DIRECT = [[122.2,31],[125,32],[127.8,33.6],[128.9,34.6],[129.1,35.1]];
+const TAIL = [[104,1.3],[108,4],[113,10],[118,18],[119,22.5],[120.2,25.5],[122.5,28.5],[125.5,31],[127.8,33.6],[128.9,34.6],[129.1,35.1]];
+const ROUTES = {
+  cn:  { pts:DIRECT, color:'#2563eb', icon:'🚢' },
+  rail:   { pts:[[121.9,31.1],[120.6,31.3],[118.8,32.05],[117.2,34.25],[117,36.65],[116.9,38],[117.75,38.95]], color:'#92400e', icon:'🚆', dashed:true },
+  altSea: { pts:[[117.85,38.9],[118.3,38.75],[119.5,38.7],[120.5,38.5],[121.6,38.2],[122.95,37.3],[123.2,36.4],[124.5,35.4],[125.6,34.6],[126,34.1],[126.7,33.9],[128,34],[128.9,34.6],[129.1,35.1]], color:'#7c3aed', icon:'🚢' },
+  air: { pts:[[121.9,31.1],[125.5,33.1],[129.1,35.1]], color:'#0ea5e9', icon:'✈️', dashed:true },
+  br:  { pts:[[-46.3,-23.9],[-30,-33],[0,-42],[20,-38],[40,-32],[70,-20],[85,0],[97,4]].concat(TAIL), color:'#16a34a', icon:'🚢' },
+  mz:  { pts:[[40.7,-14.5],[48,-11],[65,-2],[80,3],[90,4],[97,4]].concat(TAIL), color:'#d97706', icon:'🚢' },
+  blk: { pts:DIRECT, color:'#dc2626', blocked:true }
+};
+const mapSig = {};
+
+function initMap(id){
+  const m = MAPS[id];
+  const svg = $(id);
+  svg.setAttribute('viewBox', '0 0 ' + m.W + ' ' + m.H);
+  const pts = a => a.map(p => proj(id, p).map(n => n.toFixed(1)).join(',')).join(' ');
+  const text = (cls, s, p, dx, dy, an, size) => { const q = proj(id, p);
+    return '<text class="' + cls + '" x="' + (q[0] + dx) + '" y="' + (q[1] + dy) + '" text-anchor="' + an + '" font-size="' + size + '">' + s + '</text>'; };
+  const city = (n, p, dx, dy, an) => { const q = proj(id, p);
+    return '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="' + (m.wide ? 4 : 5) + '" fill="#111827" stroke="#fff" stroke-width="1.5"/>' + text('cl', n, p, dx, dy, an, m.fs); };
+  let h = m.land.map(k => '<polygon class="land" points="' + pts(LAND[k]) + '"/>').join('');
+  if (m.wide){
+    h += '<g id="' + id + '-r"></g>' + city('부산', PORT.busan, 8, 4, 'start') + city('상하이', PORT.shanghai, -8, 12, 'end') +
+         city('톈진', PORT.tianjin, -8, -6, 'end') + city('산투스(브라질)', PORT.santos, 8, 4, 'start') + city('나카라(모잠비크)', PORT.nacala, 8, 16, 'start');
+  } else {
+    h += '<polyline class="border" points="' + pts([[124.4,40],[126,41.2],[128,42],[130.6,42.3]]) + '"/>' +
+         text('cty', '중 국', [114.8,34], 0, 0, 'start', 22) + text('cty', '한 국', [127.6,36.9], 0, 0, 'start', 20) +
+         text('cty', '일본', [131.0,32.3], 0, 0, 'start', 14) +
+         text('sea', '황해', [124.3,37.3], 0, 0, 'middle', 15) + text('sea', '발해만', [119.9,39.7], 0, 0, 'middle', 12) +
+         text('sea', '동중국해', [125.2,30.2], 0, 0, 'middle', 15) + text('sea', '대한해협', [129.9,34.05], 0, 0, 'middle', 11) + text('cl', '상하이항 봉쇄', [123.6,30.6], 0, 0, 'start', 12).replace('class="cl"', 'class="cl" style="fill:#dc2626"') +
+         '<g id="' + id + '-r"></g>' + city('상하이', PORT.shanghai, -9, 5, 'end') + city('톈진', PORT.tianjin, -9, 5, 'end') + city('부산', PORT.busan, 9, 5, 'start');
+  }
+  svg.innerHTML = h;
+}
+
+// items: [{ key, days, w }]  (key refers to ROUTES)
+function drawRoutes(id, items){
+  const g = $(id + '-r'), m = MAPS[id];
+  const sig = items.map(i => i.key + ':' + Math.round(i.days * 10)).join('|');
+  if (mapSig[id] !== sig){
+    mapSig[id] = sig;
+    g.innerHTML = items.map(i => {
+      const r = ROUTES[i.key], pid = id + '-p-' + i.key;
+      const d = 'M' + r.pts.map(p => proj(id, p).map(n => n.toFixed(1)).join(',')).join(' L');
+      let h = '<path id="' + pid + '" d="' + d + '" fill="none" stroke="' + r.color + '" stroke-linecap="round" stroke-linejoin="round"' +
+              ((r.dashed || r.blocked) ? ' stroke-dasharray="8 6"' : '') + ' opacity="' + (r.blocked ? 0.95 : 0.8) + '"/>';
+      if (r.blocked){
+        const q = proj(id, r.pts[2]);
+        h += '<text x="' + q[0] + '" y="' + q[1] + '" font-size="' + (m.fs + 6) + '" font-weight="800" fill="#dc2626" text-anchor="middle" dy="6">✖</text>';
+      } else {
+        h += '<text font-size="' + (m.fs + 5) + '" text-anchor="middle" dy="6">' + r.icon + '<animateMotion dur="' + (2.5 + i.days * 0.18).toFixed(1) +
+             's" repeatCount="indefinite"><mpath href="#' + pid + '"/></animateMotion></text>';
+      }
+      return h;
+    }).join('');
+  }
+  items.forEach(i => { const el = $(id + '-p-' + i.key); if (el) el.setAttribute('stroke-width', (i.w * m.k).toFixed(1)); });
+}
+
+function shareItems(res){
+  return res.lines.filter(l => l.qty > 1e-6).map(l => ({ key:l.id, days:l.days, w:1.5 + l.qty / Math.max(res.total, 1e-9) * 7 }));
+}
+
+function renderDiv(){
+  const A = calcDiversify(state, { cn:100, br:0, mz:0 });
+  const B = calcDiversify(state, state.divWeights);
+  const wt = '이 가정에서는 다변화만으로 수요를 채울 수 없음';
+  $('divA-out').innerHTML = outputHTML(A, null, 'A', wt);
+  $('divB-out').innerHTML = outputHTML(B, A, 'A', wt);
+  renderCharts('divCharts', [
+    { label:'A 중국만',   res:A, color:COL.A },
+    { label:'B 일부 대체', res:B, color:COL.B }
+  ]);
+  drawRoutes('map-div', shareItems(B));
+}
+
+function renderBlock(){
+  const A = calcBlockA(state), B = calcBlockB(state), C = calcBlockC(state);
+  const map = { A:A, B:B, C:C };
+  const texts = {
+    A:'항공 수송 한도가 부족해 이 가정에서는 항공만으로 수요를 채울 수 없음',
+    B:'대체국 공급 한도가 부족해 이 가정에서는 다변화만으로 수요를 채울 수 없음',
+    C:'차단 기간 동안 중국의 공급 가능량이 수요보다 적음'
+  };
+  $('blockOut').innerHTML = outputHTML(map[blockTab], blockTab === 'B' ? null : B, 'B', texts[blockTab]);
+  $('blockCard').className = 'card ' + blockTab;
+  ['A', 'B', 'C'].forEach(k => $('blk' + k + '-in').classList.toggle('hidden', k !== blockTab));
+  document.querySelectorAll('#blockTabs .stab').forEach(b => b.classList.toggle('active', b.dataset.bt === blockTab));
+
+  // A and C use the zoomed East Asia map, B uses the wide world map
+  $('map-zoom').classList.toggle('hidden', blockTab === 'B');
+  $('map-wide').classList.toggle('hidden', blockTab !== 'B');
+  const items = [{ key:'blk', days:0, w:3 }];
+  if (blockTab === 'A') items.push({ key:'air', days:A.days, w:3 });
+  if (blockTab === 'C'){
+    items.push({ key:'rail', days:state.rail.days, w:3 });
+    items.push({ key:'altSea', days:state.tjSea.days, w:4 });
+  }
+  if (blockTab === 'B') shareItems(B).forEach(i => items.push(i));
+  drawRoutes(blockTab === 'B' ? 'map-wide' : 'map-zoom', items);
+
+  const rows = [
+    ['톤당 도착비용', r => fmtUSD(r.landed) + '/톤', null],
+    ['HHI (집중도)',  r => fmt(r.hhi, 0), null],
+    ['소요일',        r => fmt(r.days, 1) + '일', null],
+    ['공급 부족량',   r => fmt(r.shortage, 0) + '톤', r => r.shortage > 0]
+  ];
+  let t = '<thead><tr><th>항목</th>' +
+          '<th style="color:' + COL.A + '">A 항공 수입</th>' +
+          '<th style="color:' + COL.B + '">B 전량 대체</th>' +
+          '<th style="color:' + COL.C + '">C 철도+톈진항</th></tr></thead><tbody>';
+  rows.forEach(row => {
+    t += '<tr><th>' + row[0] + '</th>' + [A, B, C].map(r => {
+      const bad = row[2] && row[2](r);
+      return '<td' + (bad ? ' class="bad"' : '') + '>' + row[1](r) + '</td>';
+    }).join('') + '</tr>';
+  });
+  $('cmpTable').innerHTML = t + '</tbody>';
+
+  renderCharts('blockCharts', [
+    { label:'A 항공',     res:A, color:COL.A },
+    { label:'B 전량 대체', res:B, color:COL.B },
+    { label:'C 철도+톈진항', res:C, color:COL.C }
+  ]);
+}
+
+function update(){
+  bindings.forEach(f => f());
+  renderDiv();
+  renderBlock();
+}
+
+/* ===== events ===== */
+document.querySelectorAll('#winTabs .tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#winTabs .tab').forEach(b => b.classList.toggle('active', b === btn));
+    $('win-div').classList.toggle('hidden', btn.dataset.win !== 'div');
+    $('win-block').classList.toggle('hidden', btn.dataset.win !== 'block');
+  });
+});
+document.querySelectorAll('#blockTabs .stab').forEach(btn => {
+  btn.addEventListener('click', () => { blockTab = btn.dataset.bt; renderBlock(); });
+});
+// Start / pause buttons for the ship animations
+document.querySelectorAll('.mbtns').forEach(box => {
+  box.querySelectorAll('.mbtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const play = btn.dataset.play === '1';
+      box.dataset.maps.split(',').forEach(id => { play ? $(id).unpauseAnimations() : $(id).pauseAnimations(); });
+      box.querySelectorAll('.mbtn').forEach(b => b.classList.toggle('on', b === btn));
+    });
+  });
+});
+$('resetBtn').addEventListener('click', () => { state = clone(CONFIG); update(); });
+
+Object.keys(MAPS).forEach(initMap);
+buildInputs();
+update();
+</script>
+</body>
+</html>
